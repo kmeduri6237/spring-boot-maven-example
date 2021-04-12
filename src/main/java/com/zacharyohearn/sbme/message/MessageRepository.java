@@ -10,4 +10,6 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, Integer> {
     List<Message> findAllByUserId(int userId);
     Message findTopByCreatedTimestampAfter(LocalDateTime dateTime);
+
+    Message findMessageByMessageIdAndUserId(Integer messageId, int userId);
 }

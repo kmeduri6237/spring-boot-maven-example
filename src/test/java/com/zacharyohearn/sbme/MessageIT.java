@@ -13,7 +13,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -45,7 +45,7 @@ public class MessageIT {
         Message messageForUser = Message.builder()
                 .userId(1)
                 .messageBody("hello world")
-                .createdTimestamp(LocalDateTime.now())
+                .createdTimestamp(OffsetDateTime.now())
                 .build();
 
         messageRepository.save(messageForUser);
@@ -68,6 +68,40 @@ public class MessageIT {
                 .statusCode(200)
                 .extract().jsonPath().getList(".", MessageDTO.class);
 
+        assertThat(actual.size(), is(2));
+    }
+
+    @Test
+    public void testSearchMessages() {
+        Message messageForUser = Message.builder()
+                .userId(1)
+                .messageBody("hello world update")
+                .createdTimestamp(OffsetDateTime.now())
+                .build();
+
+        messageRepository.save(messageForUser);
+
+        wireMockServer.stubFor(get(urlPathEqualTo("/search"))
+                .withQueryParam("firstName", equalTo("john"))
+                .withQueryParam("lastName", equalTo("doe"))
+                .withQueryParam("dateOfBirth", equalTo("01/01/1950"))
+                .willReturn(aResponse().withHeader("content-type", "application/json").withStatus(200).withBodyFile("user.json")));
+
+        List<MessageDTO> actual = given()
+                .log().all()
+                .queryParam("firstName", "john")
+                .queryParam("lastName", "doe")
+                .queryParam("dateOfBirth", "01/01/1950")
+                .queryParam("searchText", "hello")
+                .when()
+                .port(port)
+                .get("/messages/search")
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getList(".", MessageDTO.class);
+
         assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getUserId(), is(1));
+        assertThat(actual.get(0).getMessageBody(), is("hello world update"));
     }
 }

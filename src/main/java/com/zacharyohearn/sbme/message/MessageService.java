@@ -7,8 +7,10 @@ import com.zacharyohearn.sbme.user.UserServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +28,7 @@ public class MessageService {
         this.userServiceClient = userServiceClient;
     }
 
-    private Message foundMessage = new Message();
+    private List<Message> foundMessages = new ArrayList<>();
 
     public List<MessageDTO> getMessagesForUser(String firstName, String lastName, String dateOfBirth) {
         User user = userServiceClient.getUser(firstName, lastName, dateOfBirth);
@@ -82,7 +84,7 @@ public class MessageService {
                 .build();
     }
 
-    public MessageDTO messageSearch(String firstName, String lastName, String dateOfBirth, String searchText) {
+    public List<MessageDTO> messageSearch(String firstName, String lastName, String dateOfBirth, String searchText) throws Exception {
         User user = null;
         try {
             user = userServiceClient.getUser(firstName, lastName, dateOfBirth);
@@ -91,33 +93,49 @@ public class MessageService {
             log.error(e.getMessage(), e);
         }
         List<Message> AllUserMessages = messageRepository.findAllByUserId(user.getUserId());
-        for (int i = 0; i < AllUserMessages.size(); i++) {
-            Message message = AllUserMessages.get(i);
+        AllUserMessages.forEach(message -> {
             if (message.getMessageBody().contains(searchText)) {
-                foundMessage = message;
-            }}
+                foundMessages.add(message);
+            }
+        });
 
-        return c(foundMessage, firstName, lastName, user.getUserId());
+
+        List<MessageDTO> messageDTOS = new ArrayList<>();
+        if(!CollectionUtils.isEmpty(foundMessages) && foundMessages.size() > 0) {
+            messageDTOS =  c(foundMessages, firstName, lastName, user.getUserId());
+        }
+
+        return messageDTOS;
     }
 
 
-    public void createNewMessage(String body, String firstName, String lastName, String dateOfBirth) throws JsonProcessingException
+    public void createNewMessage(MessageDTO requestBody) throws JsonProcessingException
     {
         User user = null;
         try {
-            user = userServiceClient.getUser(firstName, lastName, dateOfBirth);
+            user = userServiceClient.getUser(requestBody.getFirstName(), requestBody.getLastName(), requestBody.getDateOfBirth());
         } catch (Exception e) {
             ObjectMapper om = new ObjectMapper();
             log.error(om.writeValueAsString(e));
             e.printStackTrace();
         }
         Message newMessage = Message.builder()
-                        .userId(user.getUserId())
-                .messageBody(body)
-                .createdTimestamp(LocalDateTime.now())
-                .lastUpdatedTimestamp(LocalDateTime.now())
+                .userId(user.getUserId())
+                .messageBody(requestBody.getMessageBody())
+                .createdTimestamp(OffsetDateTime.now())
+                .lastUpdatedTimestamp(OffsetDateTime.now())
                 .build();
         messageRepository.save(newMessage);
+    }
+
+    public void updateMessage(String messageBody, int messageId, int userId)
+    {
+        Message messageDetails = messageRepository.findMessageByMessageIdAndUserId(messageId, userId);
+        if (!ObjectUtils.isEmpty(messageDetails) && !ObjectUtils.isEmpty(messageDetails.getMessageBody())) {
+            messageDetails.setMessageBody(messageBody);
+            messageDetails.setLastUpdatedTimestamp(OffsetDateTime.now());
+        }
+        messageRepository.save(messageDetails);
     }
 
 }

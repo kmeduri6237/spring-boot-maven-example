@@ -27,6 +27,7 @@ public class MessageController {
         return ResponseEntity.ok(messageService.getFirst(firstName, lastName, dateOfBirth));
     }
 
+    @SneakyThrows
     @GetMapping("/messages/search")
     public ResponseEntity searchMessagesByFirstName(@RequestParam String firstName, @RequestParam String lastName, @RequestParam String dateOfBirth, @RequestParam String searchText) {
         return ResponseEntity.ok(messageService.
@@ -35,13 +36,17 @@ public class MessageController {
 
     @SneakyThrows
     @PostMapping("/createnewmessage")
-    public ResponseEntity createNewMessage(@RequestBody String requestBody) {
-        String body =
-                JsonPath.from(requestBody).getString("body");
-        String firstName = JsonPath.from(requestBody).getString("firstName");
-        String lastName =   JsonPath.from(requestBody).getString("lastName");
-        String dateOfbirth= JsonPath.from(requestBody).getString("dateOfBirth");
-        messageService.createNewMessage(body, firstName, lastName, dateOfbirth);
+    public ResponseEntity createNewMessage(@RequestBody MessageDTO requestBody) {
+
+        messageService.createNewMessage(requestBody);
+        return ResponseEntity
+                .ok().build();
+    }
+
+    @SneakyThrows
+    @PutMapping("/updateMessage")
+    public ResponseEntity updateMessage(@RequestBody MessageDTO requestBody) {
+        messageService.updateMessage(requestBody.getMessageBody(), requestBody.getMessageId(), requestBody.getUserId());
         return ResponseEntity
                 .ok().build();
     }

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -14,8 +14,9 @@ import java.time.LocalDateTime;
 public class MessageDTO {
     private int messageId;
     private String messageBody;
-    private LocalDateTime createdTimeStamp;
+    private OffsetDateTime createdTimeStamp;
     private int userId;
     private String firstName;
     private String lastName;
+    private String dateOfBirth;
 }

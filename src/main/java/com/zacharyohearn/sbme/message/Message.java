@@ -5,8 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "message")
@@ -27,8 +32,8 @@ public class Message {
     private String messageBody;
 
     @Column(name = "createdTimestamp")
-    private LocalDateTime createdTimestamp;
+    private OffsetDateTime createdTimestamp;
 
     @Column(name = "lastUpdatedTimestamp")
-    private LocalDateTime lastUpdatedTimestamp;
+    private OffsetDateTime lastUpdatedTimestamp;
 }
